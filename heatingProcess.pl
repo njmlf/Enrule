@@ -16,8 +16,20 @@ furnace_type(tempering_furnace).                            /* 回火炉 */
 furnace_type(hardening_furnace).                            /* 淬火炉 */
 furnace_type(annealing_furnace).                            /* 退火炉 */
 
+/* 可控制设备 */
+% feeding_platform(Slots).                                    /* 上料台 */
+
+/* 任务 - 不可打断的中断的连续操作序列 */
+/* takeing_sample_to_heat(Slot, Furnace, Duration).
+heating(Furnace, HeatingCurve, Duration).
+preparing_to_cool(Furnac, Duration).
+oil_cooling(Furnac, CoolingDuration, Duration). */
+
+/* appending_slot料位 */
+
 /* 上料台 */
 
+% fsm_process(s_idle, to_schedule)
 /* 工艺路线 */
 % heat_treating(TreatmentType, Temperature, SoakingTime, CoolingType).        /* 热处理(热处理方式，加热温度, 保温时间, 冷却方式) */
 % routing(Seq, Name, HeatTreatings).                                          /* 工艺路线（编号，名称，热处理列表）*/
@@ -27,61 +39,74 @@ routing(1, 'r1', ht1).
 routing(2, 'r2', ht2).
 routing(3, 'r3', ht3).
 
+
+% routing_patten(Routes).                              /* 工艺路线包括多个阶段 */
 /* 热处理 */
-process(Routine) :- 
+/* process :- 
+
     routing(Routine, Name, HeatTreatings),
     format(Name),
     format(HeatTreatings).
     %!.
 
 can
+ */
 
-move(s_system_stoped, system_power_on, s_system_ready).
-move(_, system_power_off, s_system_stoped).
-move()
+/* power_on :-
+   write("execute power_on"),
+   nl.
+
+power_off :-
+   write("execute power_off"),
+   nl.
+
+reset :-
+   write("execute reset"),
+   nl.
 
 
 
+starting :-
+   power_on,
+   reset.
+
+s_system_idel :- 
+   write("running ........"),
+   nl,
+   power_off.
+
+run(Input_file) :-
+   power_on,
+   reset,
+   s_system_idel.
+
+s_slot_on(N) :-
+   slot_loaded(N).
+
+system_toProcess(Id, Sample) :-
+   slot_ready(Id, Sample).
+ */
 
 /* '油冷'(Duration).
 '淬火'(Temperature, HeatingDuration, CoolingType).
 '工艺路线'([]).
 '工艺路线'(b, 2).*/
 
-move(state(middle,onbox,middle,hasnot),
-   grasp,
-   state(middle,onbox,middle,has)).
-move(state(P,onfloor,P,H),
-   climb,
-   state(P,onbox,P,H)).
-move(state(P1,onfloor,P1,H),
-   drag(P1,P2),
-   state(P2,onfloor,P2,H)).
-move(state(P1,onfloor,B,H),
-   walk(P1,P2),
-   state(P2,onfloor,B,H)).
-canget(state(_,_,_,has)).
-canget(State1) :-
-   move(State1,_,State2),
-   canget(State2).
 
-arc(1,2).
-arc(1,3).
-arc(2,4).
-arc(2,5).
-arc(2,6).
-arc(5,7).
-arc(3,8).
-arc(3,9).
-arc(9,10).
+main :-
+   greeting,
+   repeat,
+   write('> '),
+   read(X),
+   do(X),
+   X == quit.
 
-% path_leaf(N,P) <- P is a path starting at node N, ending
-% in a leaf in the graph given by arc/2
-path_leaf(Leaf, [Leaf]) :- 
-    leaf(Leaf). 
+greeting :-
+   write('This is the native Prolog shell.'), nl.
 
-path_leaf(Node1,[Node1|Nodes]):-
-    arc(Node1,Node2),
-    path_leaf(Node2,Nodes).
+do(quit).
 
-leaf(Leaf):- not(arc(Leaf, SomeNode)).
+do(X) :-
+   write(X),
+   write(' is not a legal command.'), nl,
+   fail.
